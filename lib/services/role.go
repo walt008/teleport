@@ -323,7 +323,7 @@ func ApplyTraits(r Role, traits map[string][]string) Role {
 
 		var outLogins []string
 		for _, login := range inLogins {
-			variableValues, err := applyValueTraits(login, traits)
+			variableValues, err := ApplyValueTraits(login, traits)
 			if err != nil {
 				if !trace.IsNotFound(err) {
 					log.Debugf("Skipping login %v: %v.", login, err)
@@ -349,7 +349,7 @@ func ApplyTraits(r Role, traits map[string][]string) Role {
 		inKubeGroups := r.GetKubeGroups(condition)
 		var outKubeGroups []string
 		for _, group := range inKubeGroups {
-			variableValues, err := applyValueTraits(group, traits)
+			variableValues, err := ApplyValueTraits(group, traits)
 			if err != nil {
 				if !trace.IsNotFound(err) {
 					log.Debugf("Skipping kube group %v: %v.", group, err)
@@ -364,7 +364,7 @@ func ApplyTraits(r Role, traits map[string][]string) Role {
 		inKubeUsers := r.GetKubeUsers(condition)
 		var outKubeUsers []string
 		for _, user := range inKubeUsers {
-			variableValues, err := applyValueTraits(user, traits)
+			variableValues, err := ApplyValueTraits(user, traits)
 			if err != nil {
 				if !trace.IsNotFound(err) {
 					log.Debugf("Skipping kube user %v: %v.", user, err)
@@ -379,7 +379,7 @@ func ApplyTraits(r Role, traits map[string][]string) Role {
 		inDbNames := r.GetDatabaseNames(condition)
 		var outDbNames []string
 		for _, name := range inDbNames {
-			variableValues, err := applyValueTraits(name, traits)
+			variableValues, err := ApplyValueTraits(name, traits)
 			if err != nil {
 				if !trace.IsNotFound(err) {
 					log.Debugf("Skipping database name %q: %v.", name, err)
@@ -394,7 +394,7 @@ func ApplyTraits(r Role, traits map[string][]string) Role {
 		inDbUsers := r.GetDatabaseUsers(condition)
 		var outDbUsers []string
 		for _, user := range inDbUsers {
-			variableValues, err := applyValueTraits(user, traits)
+			variableValues, err := ApplyValueTraits(user, traits)
 			if err != nil {
 				if !trace.IsNotFound(err) {
 					log.Debugf("Skipping database user %q: %v.", user, err)
@@ -438,7 +438,7 @@ func applyLabelsTraits(inLabels Labels, traits map[string][]string) Labels {
 	outLabels := make(Labels, len(inLabels))
 	// every key will be mapped to the first value
 	for key, vals := range inLabels {
-		keyVars, err := applyValueTraits(key, traits)
+		keyVars, err := ApplyValueTraits(key, traits)
 		if err != nil {
 			// empty key will not match anything
 			log.Debugf("Setting empty node label pair %q -> %q: %v", key, vals, err)
@@ -447,7 +447,7 @@ func applyLabelsTraits(inLabels Labels, traits map[string][]string) Labels {
 
 		var values []string
 		for _, val := range vals {
-			valVars, err := applyValueTraits(val, traits)
+			valVars, err := ApplyValueTraits(val, traits)
 			if err != nil {
 				log.Debugf("Setting empty node label value %q -> %q: %v", key, val, err)
 				// empty value will not match anything
@@ -460,12 +460,12 @@ func applyLabelsTraits(inLabels Labels, traits map[string][]string) Labels {
 	return outLabels
 }
 
-// applyValueTraits applies the passed in traits to the variable,
+// ApplyValueTraits applies the passed in traits to the variable,
 // returns BadParameter in case if referenced variable is unsupported,
 // returns NotFound in case if referenced trait is missing,
 // mapped list of values otherwise, the function guarantees to return
 // at least one value in case if return value is nil
-func applyValueTraits(val string, traits map[string][]string) ([]string, error) {
+func ApplyValueTraits(val string, traits map[string][]string) ([]string, error) {
 	// Extract the variable from the role variable.
 	variable, err := parse.NewExpression(val)
 	if err != nil {

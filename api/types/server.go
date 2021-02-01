@@ -454,7 +454,18 @@ const ServerSpecV2Schema = `{
 		    "type": "object",
 		    "additionalProperties": false,
 		    "properties": {
-			  "redirect": {"type": ["array"], "items": {"type": "string"}}
+			  "redirect": {"type": ["array", "null"], "items": {"type": "string"}},
+			  "headers": {
+				"type": ["array", "null"],
+				"items": {
+				  "type": "object",
+				  "additionalProperties": false,
+				  "properties": {
+				    "name": {"type": "string"},
+				    "value": {"type": "string"}
+				  }
+				}
+			  }
 		    }
 		  },
 		  "labels": {

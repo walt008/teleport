@@ -867,8 +867,18 @@ func applyAppsConfig(fc *FileConfig, cfg *service.Config) error {
 			InsecureSkipVerify: application.InsecureSkipVerify,
 		}
 		if application.Rewrite != nil {
+			// Parse http rewrite headers if there's any.
+			var headers []service.Header
+			for _, header := range application.Rewrite.Headers {
+				parsed, err := service.ParseHeader(header)
+				if err != nil {
+					return trace.Wrap(err)
+				}
+				headers = append(headers, *parsed)
+			}
 			app.Rewrite = &service.Rewrite{
 				Redirect: application.Rewrite.Redirect,
+				Headers:  headers,
 			}
 		}
 		if err := app.Check(); err != nil {

@@ -254,7 +254,18 @@ message App {
 message Rewrite {
     // Redirect defines a list of hosts which will be rewritten to the public
     // address of the application if they occur in the "Location" header.
-    repeated string Redirect = 1 [ (gogoproto.jsontag) = "redirect" ];
+    repeated string Redirect = 1 [ (gogoproto.jsontag) = "redirect,omitempty" ];
+    // Headers is a list of headers to inject when passing the request over
+    // to the application.
+    repeated Header Headers = 2 [ (gogoproto.jsontag) = "headers,omitempty" ];
+}
+
+// Header represents a single http header passed over to the proxied application.
+message Header {
+    // Name is the http header name.
+    string Name = 1 [ (gogoproto.jsontag) = "name" ];
+    // Value is the http header value.
+    string Value = 2 [ (gogoproto.jsontag) = "value" ];
 }
 
 // CommandLabelV2 is a label that has a value as a result of the
@@ -359,10 +370,8 @@ message ProvisionTokenV1 {
     // Roles is a list of roles associated with the token,
     // that will be converted to metadata in the SSH and X509
     // certificates issued to the user of the token
-    repeated string Roles = 1 [ 
-        (gogoproto.jsontag) = "roles",
-        (gogoproto.casttype) = "SystemRole"
-    ];
+    repeated string Roles = 1
+        [ (gogoproto.jsontag) = "roles", (gogoproto.casttype) = "SystemRole" ];
     // Expires is a global expiry time header can be set on any resource in the
     // system.
     google.protobuf.Timestamp Expires = 2 [
@@ -396,10 +405,8 @@ message ProvisionTokenSpecV2 {
     // Roles is a list of roles associated with the token,
     // that will be converted to metadata in the SSH and X509
     // certificates issued to the user of the token
-    repeated string Roles = 1 [
-        (gogoproto.jsontag) = "roles",
-        (gogoproto.casttype) = "SystemRole"
-    ];
+    repeated string Roles = 1
+        [ (gogoproto.jsontag) = "roles", (gogoproto.casttype) = "SystemRole" ];
 }
 
 // StaticTokensV2 implements the StaticTokens interface.

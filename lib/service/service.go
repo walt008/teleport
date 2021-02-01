@@ -45,6 +45,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/gravitational/teleport"
+	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/backend"
@@ -2911,6 +2912,13 @@ func (process *TeleportProcess) initApps() {
 			if app.Rewrite != nil {
 				a.Rewrite = &services.Rewrite{
 					Redirect: app.Rewrite.Redirect,
+				}
+				for _, header := range app.Rewrite.Headers {
+					a.Rewrite.Headers = append(a.Rewrite.Headers,
+						&types.Header{
+							Name:  header.Name,
+							Value: header.Value,
+						})
 				}
 			}
 

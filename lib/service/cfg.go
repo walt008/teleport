@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -663,6 +664,25 @@ func (a App) Check() error {
 type Rewrite struct {
 	// Redirect is a list of hosts that should be rewritten to the public address.
 	Redirect []string
+	// Headers is a list of extra headers to inject in the request.
+	Headers []Header
+}
+
+// Header represents a single http header passed over to the proxied application.
+type Header struct {
+	// Name is the http header name.
+	Name string
+	// Value is the http header value.
+	Value string
+}
+
+// ParseHeader parses the provided string as a http header.
+func ParseHeader(header string) (*Header, error) {
+	parts := strings.SplitN(header, ":", 2)
+	if len(parts) != 2 {
+		return nil, trace.BadParameter("failed to parse %q as http header", header)
+	}
+	return &Header{Name: parts[0], Value: parts[1]}, nil
 }
 
 // MakeDefaultConfig creates a new Config structure and populates it with defaults
