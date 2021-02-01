@@ -52,6 +52,8 @@ func (h *Handler) newSession(ctx context.Context, ws services.WebSession) (*sess
 		return nil, trace.Wrap(err)
 	}
 
+	logrus.Debugf("=== Identity: %#v", identity)
+
 	// Query the cluster this application is running in to find the public
 	// address and cluster name pair which will be encoded into the certificate.
 	clusterClient, err := h.c.ProxyClient.GetSite(identity.RouteToApp.ClusterName)

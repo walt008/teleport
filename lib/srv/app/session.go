@@ -66,6 +66,8 @@ func (s *Server) newSession(ctx context.Context, identity *tlsca.Identity, app *
 		return nil, trace.Wrap(err)
 	}
 
+	logrus.Debugf("+++ Identity: %#v", identity)
+
 	// Create a rewriting transport that will be used to forward requests.
 	transport, err := newTransport(s.closeContext,
 		&transportConfig{

@@ -174,7 +174,7 @@ func (t *transport) rewriteRequest(r *http.Request) error {
 	for _, header := range t.c.rewrite.Headers {
 		values, err := services.ApplyValueTraits(header.Value, t.c.traits)
 		if err != nil {
-			logrus.WithError(err).Warn("Failed to apply traits to %q.", header.Value)
+			logrus.WithError(err).Warnf("Failed to apply traits to %q.", header.Value)
 			continue
 		}
 		for _, value := range values {
