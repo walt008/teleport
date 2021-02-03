@@ -474,13 +474,18 @@ func (h *Handler) getUserContext(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	res, err := clt.GetAccessCapabilities(r.Context(), services.AccessCapabilitiesRequest{
-		RequestableRoles: true,
+		RequestableRoles:   true,
+		SuggestedReviewers: true,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
-	userContext.RequestableRoles = res.RequestableRoles
+	userContext.AccessCapabilities = ui.AccessCapabilities{
+		RequestableRoles:   res.RequestableRoles,
+		SuggestedReviewers: res.SuggestedReviewers,
+	}
+
 	userContext.Cluster, err = ui.GetClusterDetails(site)
 	if err != nil {
 		return nil, trace.Wrap(err)
