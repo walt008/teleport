@@ -34,7 +34,12 @@ import (
 	"time"
 
 	"github.com/gravitational/teleport"
+	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/auth"
+	"github.com/gravitational/teleport/lib/auth/client"
+	"github.com/gravitational/teleport/lib/auth/server"
+	"github.com/gravitational/teleport/lib/auth/test"
+	testservices "github.com/gravitational/teleport/lib/auth/test/services"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/services"
@@ -48,9 +53,9 @@ import (
 type Suite struct {
 	clock        clockwork.FakeClock
 	dataDir      string
-	authServer   *auth.TestAuthServer
-	tlsServer    *auth.TestTLSServer
-	authClient   *auth.Client
+	authServer   *testservices.AuthServer
+	tlsServer    *testservices.TLSServer
+	authClient   *client.Client
 	appServer    *Server
 	server       services.Server
 	hostCertPool *x509.CertPool
@@ -79,21 +84,21 @@ func (s *Suite) SetUpSuite(c *check.C) {
 
 	var err error
 	// Create Auth Server.
-	s.authServer, err = auth.NewTestAuthServer(auth.TestAuthServerConfig{
+	s.authServer, err = testservices.NewAuthServer(testservices.AuthServerConfig{
 		ClusterName: "root.example.com",
 		Dir:         s.dataDir,
 		Clock:       s.clock,
 	})
 	c.Assert(err, check.IsNil)
-	s.tlsServer, err = s.authServer.NewTestTLSServer()
+	s.tlsServer, err = s.authServer.NewTLSServer()
 	c.Assert(err, check.IsNil)
 
 	// Create user and role.
-	s.user, s.role, err = auth.CreateUserAndRole(s.tlsServer.Auth(), "foo", []string{"foo-login"})
+	s.user, s.role, err = test.CreateUserAndRole(s.tlsServer.Auth(), "foo", []string{"foo-login"})
 	c.Assert(err, check.IsNil)
 
 	// Grant the user's role access to the application label "bar: baz".
-	s.role.SetAppLabels(services.Allow, services.Labels{"bar": []string{"baz"}})
+	s.role.SetAppLabels(types.Allow, services.Labels{"bar": []string{"baz"}})
 	err = s.tlsServer.Auth().UpsertRole(context.Background(), s.role)
 	c.Assert(err, check.IsNil)
 
@@ -102,7 +107,7 @@ func (s *Suite) SetUpSuite(c *check.C) {
 		DomainName: "root.example.com",
 	}, false)
 	c.Assert(err, check.IsNil)
-	s.hostCertPool, err = services.CertPool(rootCA)
+	s.hostCertPool, err = auth.CertPool(rootCA)
 	c.Assert(err, check.IsNil)
 }
 
@@ -163,10 +168,10 @@ func (s *Suite) SetUpTest(c *check.C) {
 	}
 
 	// Create a client with a machine role of RoleApp.
-	s.authClient, err = s.tlsServer.NewClient(auth.TestServerID(teleport.RoleApp, s.hostUUID))
+	s.authClient, err = s.tlsServer.NewClient(testservices.ServerID(teleport.RoleApp, s.hostUUID))
 	c.Assert(err, check.IsNil)
 
-	serverIdentity, err := auth.NewServerIdentity(s.authServer.AuthServer, s.hostUUID, teleport.RoleApp)
+	serverIdentity, err := testservices.NewServerIdentity(s.authServer.AuthServer, s.hostUUID, teleport.RoleApp)
 	c.Assert(err, check.IsNil)
 	tlsConfig, err := serverIdentity.TLSConfig(nil)
 	c.Assert(err, check.IsNil)
@@ -187,7 +192,7 @@ func (s *Suite) SetUpTest(c *check.C) {
 	), 0755)
 	c.Assert(err, check.IsNil)
 
-	authorizer, err := auth.NewAuthorizer(s.authClient, s.authClient, s.authClient)
+	authorizer, err := server.NewAuthorizer(s.authClient, s.authClient, s.authClient)
 	c.Assert(err, check.IsNil)
 
 	s.appServer, err = New(context.Background(), &Config{

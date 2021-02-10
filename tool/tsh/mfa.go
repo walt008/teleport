@@ -23,15 +23,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gravitational/kingpin"
-	"github.com/gravitational/trace"
-
 	"github.com/gravitational/teleport/api/client/proto"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/asciitable"
 	"github.com/gravitational/teleport/lib/auth/u2f"
 	"github.com/gravitational/teleport/lib/client"
 	"github.com/gravitational/teleport/lib/utils/prompt"
+
+	"github.com/gravitational/kingpin"
+	"github.com/gravitational/trace"
 )
 
 type mfaCommands struct {

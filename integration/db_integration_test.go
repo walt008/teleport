@@ -22,8 +22,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib"
-	"github.com/gravitational/teleport/lib/auth"
+	authclient "github.com/gravitational/teleport/lib/auth/client"
+	"github.com/gravitational/teleport/lib/auth/test"
 	"github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/service"
@@ -185,7 +187,7 @@ type databaseClusterPack struct {
 	user            services.User
 	role            services.Role
 	dbProcess       *service.TeleportProcess
-	dbAuthClient    *auth.Client
+	dbAuthClient    *authclient.Client
 	postgresService service.Database
 	postgresAddr    string
 	postgres        *postgres.TestServer
@@ -405,19 +407,19 @@ func setupDatabaseTest(t *testing.T) *databasePack {
 func (p *databasePack) setupUsersAndRoles(t *testing.T) {
 	var err error
 
-	p.root.user, p.root.role, err = auth.CreateUserAndRole(p.root.cluster.Process.GetAuthServer(), "root-user", nil)
+	p.root.user, p.root.role, err = test.CreateUserAndRole(p.root.cluster.Process.GetAuthServer(), "root-user", nil)
 	require.NoError(t, err)
 
-	p.root.role.SetDatabaseUsers(services.Allow, []string{services.Wildcard})
-	p.root.role.SetDatabaseNames(services.Allow, []string{services.Wildcard})
+	p.root.role.SetDatabaseUsers(types.Allow, []string{services.Wildcard})
+	p.root.role.SetDatabaseNames(types.Allow, []string{services.Wildcard})
 	err = p.root.cluster.Process.GetAuthServer().UpsertRole(context.Background(), p.root.role)
 	require.NoError(t, err)
 
-	p.leaf.user, p.leaf.role, err = auth.CreateUserAndRole(p.root.cluster.Process.GetAuthServer(), "leaf-user", nil)
+	p.leaf.user, p.leaf.role, err = test.CreateUserAndRole(p.root.cluster.Process.GetAuthServer(), "leaf-user", nil)
 	require.NoError(t, err)
 
-	p.leaf.role.SetDatabaseUsers(services.Allow, []string{services.Wildcard})
-	p.leaf.role.SetDatabaseNames(services.Allow, []string{services.Wildcard})
+	p.leaf.role.SetDatabaseUsers(types.Allow, []string{services.Wildcard})
+	p.leaf.role.SetDatabaseNames(types.Allow, []string{services.Wildcard})
 	err = p.leaf.cluster.Process.GetAuthServer().UpsertRole(context.Background(), p.leaf.role)
 	require.NoError(t, err)
 }

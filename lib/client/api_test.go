@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/gravitational/teleport/api/types"
-	"github.com/gravitational/teleport/lib/auth"
+	"github.com/gravitational/teleport/lib/auth/server"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
 
@@ -275,7 +275,7 @@ func (s *APITestSuite) TestLoginCluster(c *check.C) {
 	tests := []struct {
 		inClusterName  string
 		inCertGetter   *testCertGetter
-		inCertificates []auth.TrustedCerts
+		inCertificates []server.TrustedCerts
 		outClusterName string
 		outError       bool
 	}{
@@ -283,8 +283,8 @@ func (s *APITestSuite) TestLoginCluster(c *check.C) {
 		{
 			inClusterName: "",
 			inCertGetter:  &testCertGetter{},
-			inCertificates: []auth.TrustedCerts{
-				auth.TrustedCerts{
+			inCertificates: []server.TrustedCerts{
+				server.TrustedCerts{
 					ClusterName: "example.com",
 				},
 			},
@@ -295,8 +295,8 @@ func (s *APITestSuite) TestLoginCluster(c *check.C) {
 		{
 			inClusterName: "example.com",
 			inCertGetter:  &testCertGetter{},
-			inCertificates: []auth.TrustedCerts{
-				auth.TrustedCerts{
+			inCertificates: []server.TrustedCerts{
+				server.TrustedCerts{
 					ClusterName: "example.com",
 				},
 			},
@@ -309,8 +309,8 @@ func (s *APITestSuite) TestLoginCluster(c *check.C) {
 			inCertGetter: &testCertGetter{
 				clusterNames: []string{"leaf.example.com"},
 			},
-			inCertificates: []auth.TrustedCerts{
-				auth.TrustedCerts{
+			inCertificates: []server.TrustedCerts{
+				server.TrustedCerts{
 					ClusterName: "example.com",
 				},
 			},
@@ -323,8 +323,8 @@ func (s *APITestSuite) TestLoginCluster(c *check.C) {
 			inCertGetter: &testCertGetter{
 				clusterNames: []string{"leaf.example.com"},
 			},
-			inCertificates: []auth.TrustedCerts{
-				auth.TrustedCerts{
+			inCertificates: []server.TrustedCerts{
+				server.TrustedCerts{
 					ClusterName: "example.com",
 				},
 			},

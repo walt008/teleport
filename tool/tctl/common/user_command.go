@@ -27,7 +27,8 @@ import (
 	"github.com/gravitational/kingpin"
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/lib/asciitable"
-	"github.com/gravitational/teleport/lib/auth"
+	"github.com/gravitational/teleport/lib/auth/client"
+	"github.com/gravitational/teleport/lib/auth/server"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/service"
@@ -120,7 +121,7 @@ func (u *UserCommand) Initialize(app *kingpin.Application, config *service.Confi
 }
 
 // TryRun takes the CLI command as an argument (like "users add") and executes it.
-func (u *UserCommand) TryRun(cmd string, client auth.ClientI) (match bool, err error) {
+func (u *UserCommand) TryRun(cmd string, client client.ClientI) (match bool, err error) {
 	switch cmd {
 	case u.userAdd.FullCommand():
 		err = u.Add(client)
@@ -139,11 +140,11 @@ func (u *UserCommand) TryRun(cmd string, client auth.ClientI) (match bool, err e
 }
 
 // ResetPassword resets user password and generates a token to setup new password
-func (u *UserCommand) ResetPassword(client auth.ClientI) error {
-	req := auth.CreateResetPasswordTokenRequest{
+func (u *UserCommand) ResetPassword(client client.ClientI) error {
+	req := server.CreateResetPasswordTokenRequest{
 		Name: u.login,
 		TTL:  u.ttl,
-		Type: auth.ResetPasswordTokenTypePassword,
+		Type: server.ResetPasswordTokenTypePassword,
 	}
 	token, err := client.CreateResetPasswordToken(context.TODO(), req)
 	if err != nil {
@@ -204,7 +205,7 @@ func (u *UserCommand) printResetPasswordToken(token services.ResetPasswordToken,
 
 // Add implements `tctl users add` for the enterprise edition. Unlike the OSS
 // version, this one requires --roles flag to be set
-func (u *UserCommand) Add(client auth.ClientI) error {
+func (u *UserCommand) Add(client client.ClientI) error {
 	// DELETE IN (7.x)
 	// Delete these legacy flags after OSS migration to RBAC.
 	if modules.GetModules().BuildType() == modules.BuildOSS {
@@ -250,10 +251,10 @@ func (u *UserCommand) Add(client auth.ClientI) error {
 
 	}
 
-	token, err := client.CreateResetPasswordToken(context.TODO(), auth.CreateResetPasswordTokenRequest{
+	token, err := client.CreateResetPasswordToken(context.TODO(), server.CreateResetPasswordTokenRequest{
 		Name: u.login,
 		TTL:  u.ttl,
-		Type: auth.ResetPasswordTokenTypeInvite,
+		Type: server.ResetPasswordTokenTypeInvite,
 	})
 	if err != nil {
 		return trace.Wrap(err)
@@ -268,7 +269,7 @@ func (u *UserCommand) Add(client auth.ClientI) error {
 
 // addLegacy creates a new sign-up token and prints a token URL to stdout.
 // A user is not created until he visits the sign-up URL and completes the process
-func (u *UserCommand) legacyAdd(client auth.ClientI) error {
+func (u *UserCommand) legacyAdd(client client.ClientI) error {
 	fmt.Printf(`NOTE: Teleport 6.0 added RBAC in Open Source edition.
 
 In the future, please create a role and use a new format with --roles flag:
@@ -307,10 +308,10 @@ Meanwhile we are going to assign user %q to role %q created during migration.
 		return trace.Wrap(err)
 	}
 
-	token, err := client.CreateResetPasswordToken(context.TODO(), auth.CreateResetPasswordTokenRequest{
+	token, err := client.CreateResetPasswordToken(context.TODO(), server.CreateResetPasswordTokenRequest{
 		Name: u.login,
 		TTL:  u.ttl,
-		Type: auth.ResetPasswordTokenTypeInvite,
+		Type: server.ResetPasswordTokenTypeInvite,
 	})
 	if err != nil {
 		return err
@@ -357,7 +358,7 @@ func printTokenAsText(token services.ResetPasswordToken, messageFormat string) e
 }
 
 // Update updates existing user
-func (u *UserCommand) Update(client auth.ClientI) error {
+func (u *UserCommand) Update(client client.ClientI) error {
 	user, err := client.GetUser(u.login, false)
 	if err != nil {
 		return trace.Wrap(err)
@@ -377,7 +378,7 @@ func (u *UserCommand) Update(client auth.ClientI) error {
 }
 
 // List prints all existing user accounts
-func (u *UserCommand) List(client auth.ClientI) error {
+func (u *UserCommand) List(client client.ClientI) error {
 	users, err := client.GetUsers(false)
 	if err != nil {
 		return trace.Wrap(err)
@@ -406,7 +407,7 @@ func (u *UserCommand) List(client auth.ClientI) error {
 
 // Delete deletes teleport user(s). User IDs are passed as a comma-separated
 // list in UserCommand.login
-func (u *UserCommand) Delete(client auth.ClientI) error {
+func (u *UserCommand) Delete(client client.ClientI) error {
 	for _, l := range strings.Split(u.login, ",") {
 		if err := client.DeleteUser(context.TODO(), l); err != nil {
 			return trace.Wrap(err)

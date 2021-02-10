@@ -3,8 +3,9 @@ package ui
 import (
 	"testing"
 
+	"github.com/gravitational/teleport/api/types"
+	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/defaults"
-	"github.com/gravitational/teleport/lib/services"
 	"gopkg.in/check.v1"
 )
 
@@ -15,45 +16,45 @@ var _ = check.Suite(&UserContextSuite{})
 func TestUserContext(t *testing.T) { check.TestingT(t) }
 
 func (s *UserContextSuite) TestNewUserContext(c *check.C) {
-	user := &services.UserV2{
-		Metadata: services.Metadata{
+	user := &types.UserV2{
+		Metadata: types.Metadata{
 			Name: "root",
 		},
 	}
 
 	// set some rules
-	role1 := &services.RoleV3{}
-	role1.SetNamespaces(services.Allow, []string{defaults.Namespace})
-	role1.SetRules(services.Allow, []services.Rule{
+	role1 := &types.RoleV3{}
+	role1.SetNamespaces(types.Allow, []string{defaults.Namespace})
+	role1.SetRules(types.Allow, []types.Rule{
 		{
-			Resources: []string{services.KindAuthConnector},
-			Verbs:     services.RW(),
+			Resources: []string{types.KindAuthConnector},
+			Verbs:     auth.RW(),
 		},
 	})
 
 	// not setting the rule, or explicitly denying, both denies access
-	role1.SetRules(services.Deny, []services.Rule{
+	role1.SetRules(types.Deny, []types.Rule{
 		{
-			Resources: []string{services.KindEvent},
-			Verbs:     services.RW(),
+			Resources: []string{types.KindEvent},
+			Verbs:     auth.RW(),
 		},
 	})
 
-	role2 := &services.RoleV3{}
-	role2.SetNamespaces(services.Allow, []string{defaults.Namespace})
-	role2.SetRules(services.Allow, []services.Rule{
+	role2 := &types.RoleV3{}
+	role2.SetNamespaces(types.Allow, []string{defaults.Namespace})
+	role2.SetRules(types.Allow, []types.Rule{
 		{
-			Resources: []string{services.KindTrustedCluster},
-			Verbs:     services.RW(),
+			Resources: []string{types.KindTrustedCluster},
+			Verbs:     auth.RW(),
 		},
 	})
 
 	// set some logins
-	role1.SetLogins(services.Allow, []string{"a", "b"})
-	role1.SetLogins(services.Deny, []string{"c"})
-	role2.SetLogins(services.Allow, []string{"d"})
+	role1.SetLogins(types.Allow, []string{"a", "b"})
+	role1.SetLogins(types.Deny, []string{"c"})
+	role2.SetLogins(types.Allow, []string{"d"})
 
-	roleSet := []services.Role{role1, role2}
+	roleSet := []types.Role{role1, role2}
 	userContext, err := NewUserContext(user, roleSet)
 	c.Assert(err, check.IsNil)
 
@@ -74,7 +75,7 @@ func (s *UserContextSuite) TestNewUserContext(c *check.C) {
 	c.Assert(userContext.ACL.AccessRequests, check.DeepEquals, denied)
 	c.Assert(userContext.ACL.SSHLogins, check.DeepEquals, []string{"a", "b", "d"})
 	c.Assert(userContext.AccessStrategy, check.DeepEquals, accessStrategy{
-		Type:   services.RequestStrategyOptional,
+		Type:   types.RequestStrategyOptional,
 		Prompt: "",
 	})
 
@@ -82,7 +83,7 @@ func (s *UserContextSuite) TestNewUserContext(c *check.C) {
 	c.Assert(userContext.AuthType, check.Equals, authLocal)
 
 	// test sso auth type
-	user.Spec.GithubIdentities = []services.ExternalIdentity{{ConnectorID: "foo", Username: "bar"}}
+	user.Spec.GithubIdentities = []types.ExternalIdentity{{ConnectorID: "foo", Username: "bar"}}
 	userContext, err = NewUserContext(user, roleSet)
 	c.Assert(err, check.IsNil)
 	c.Assert(userContext.AuthType, check.Equals, authSSO)
