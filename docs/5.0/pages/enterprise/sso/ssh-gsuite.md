@@ -1,13 +1,13 @@
 ---
-title: SSH Authentication With Google Apps (G Suite)
-description: How to configure SSH access with Google Apps (also known as G Suite) using Teleport
+title: SSH Authentication With Google Workspace (formerly G Suite)
+description: How to configure SSH access with Google Workspace (formerly G Suite) using Teleport
 ---
 
-# SSH Authentication with G Suite (Google Apps)
+# SSH Authentication with Google Workspace (formerly G Suite)
 
 ## Google Apps as SSO for SSH
 
-This guide will cover how to configure [G Suite](https://gsuite.google.com) to be a
+This guide will cover how to configure [Google Workspace](https://workspace.google.com) to be a
 single sign-on (SSO) provider to issue SSH credentials to specific groups of users.
 When used in combination with role based access control (RBAC) it allows SSH administrators
 to define policies like:
@@ -22,22 +22,20 @@ to define policies like:
     edition of Teleport only supports [Github](../../admin-guide.md#github-oauth-20) as
     an SSO provider.
 
-<iframe width="712" height="400" src="https://www.youtube.com/embed/DG97l8WJ6oU?rel=0&modestbranding=1&widget_referrer=gravitational.com/teleport/docs" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-
 ## Prerequisites:
 
 Before you get started you’ll need:
 
 - An Enterprise version of Teleport v4.1.4 or greater, downloaded from [https://dashboard.gravitational.com/](https://dashboard.gravitational.com/web/login).
-- Be a G Suite Super Admin. As Google Best Practices, we would recommend setting up a seperate super admin with 2FA vs using your user.
+- Be a Google Workspace Super Admin. As Google Best Practices, we would recommend setting up a seperate super admin with 2FA vs using your user.
     - e.g. A dedicated account ben-ops@practice.io vs my daily ben@practice.io
 - Ability to create GCP Project.
-    - This might require signing up to GCP, but for this project it won’t require using any paid services. It’s just a side effect of G Suite and GCP being closely related.
+    - This might require signing up to GCP, but for this project it won’t require using any paid services. It’s just a side effect of Google Workspace and GCP being closely related.
 - Have a [verified Domain](https://support.google.com/a/answer/60216?hl=en ).
-- Ability to Setup G Suite Groups
+- Ability to Setup Google Workspace Groups
 
 
-## Configure G Suite
+## Configure Google Workspace Credentials
 
 1. Obtain OAuth 2.0 credentials  [https://developers.google.com/identity/protocols/OpenIDConnect](https://developers.google.com/identity/protocols/OpenIDConnect)
 
@@ -79,7 +77,21 @@ the OIDC Connector, under `google_service_account_uri`.
 ## Manage API Scopes:
 Before setting the Manage API client access capture the client ID of the service account.
 
-Within GSuite to access the Manage API client access go to Security -> Settings.  Navigate to Advanced Settings and open Manage API client access.  Put the client ID in the Client Name field and the below permissions in the API scopes as a single comma separated line.  Press Authorize.
+Within Google Workspace to access the Manage API client access go to Security -> API Controls.  Select Manage Domain Wide Delegation. Select Add new. Put the client ID in the Client Name field and the below permissions in the API scopes as a single comma separated line.  Press Authorize.
+
+**API Scopes:** Copy these three API Scopes.
+
+```
+https://www.googleapis.com/auth/admin.directory.group.member.readonly, https://www.googleapis.com/auth/admin.directory.group.readonly, https://www.googleapis.com/auth/admin.directory.user.readonly
+```
+
+![Create OAuth Creds](../../../img/gsuite/gsuite-6a-manage-access.png)
+
+ 
+## Create a OIDC Connector
+
+Now, create a OIDC connector [resource](../../admin-guide.md#resources).
+Write down this template as `googleworkspace-connector.yaml`:
 
 !!! Warning
 
@@ -89,22 +101,8 @@ Within GSuite to access the Manage API client access go to Security -> Settings.
 
     The email that you set for `google_admin_email` **must** be the email address of a user that has permission to list all groups, users, and group membership in your G Suite account. This user will generally need super admin privileges.
 
-**Client Name:** For Client Name: Use the Unique ID for the service account.  [See Video for instructions](https://youtu.be/DG97l8WJ6oU?t=281).
+**Client Name:** For Client Name: Use the Unique ID for the service account. 
 
-**API Scopes:** Copy these three API Scopes.
-
-```
-https://www.googleapis.com/auth/admin.directory.group.member.readonly, https://www.googleapis.com/auth/admin.directory.group.readonly, https://www.googleapis.com/auth/admin.directory.user.readonly
-```
-
-
-![Create OAuth Creds](../../../img/gsuite/gsuite-6a-manage-access.png)
-
-
-## Create a OIDC Connector
-
-Now, create a OIDC connector [resource](../../admin-guide.md#resources).
-Write down this template as `gsuite-connector.yaml`:
 
 ```yaml
 {!examples/resources/gsuite-connector.yaml!}
@@ -113,7 +111,7 @@ Write down this template as `gsuite-connector.yaml`:
 Create the connector using `tctl` tool:
 
 ```bsh
-$ tctl create gsuite-connector.yaml
+$ tctl create googleworkspace-connector.yaml
 ```
 
 ## Create Teleport Roles
@@ -155,7 +153,7 @@ spec:
   options:
     max_session_ttl: 24h
   allow:
-    logins: [ "{% raw %}{{external.username}}{% endraw %}", ubuntu ]
+    logins: [ "{{email.local(external.email)}}", ubuntu ]
     node_labels:
       access: relaxed
 ```
