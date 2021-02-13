@@ -168,6 +168,27 @@ Below are examples of the three events.
 }
 ```
 
+### FQDN
+
+By default applications are available at `appName.localProxyAddress`. This is the address most users will access an application at. An example would be `grafana.example.com`.
+
+Here `localProxyAddress` is the `public_addr` field under `proxy_service` in file configuration or the name of the cluster if that field is not set.
+
+If the application should be available at a different address, administrators can use the `public_addr` field under `app_service` to override this address to a FQDN of their choosing.
+
+When accessing an application through Trusted Clusters, applications are only available at `appName.localProxyAddress`.
+
+In summary, if an application within the root cluster is being accessed.
+
+1. `appPublicDddr`
+2. `appName.rootProxyPublicAddr`
+3. `appName.rootClusterName`
+
+If an application is being accessed in a leaf cluster.
+
+1. `appName.rootProxyPublicAddr`
+2. `appName.rootClusterName`
+
 ## Configuration
 
 ### Server
