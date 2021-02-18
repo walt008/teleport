@@ -158,6 +158,48 @@ spec:
       '*': '*'
 ```
 
+## SAML assertion encryption
+
+Teleport supports encrypted SAML assertions in responses from identity providers using x509 certificates for encryption.
+To set this up, please first follow the SSO setup guide for your identity provider. Once SSO is working,
+generate or otherwise acquire a certificate containing a public key and a seperate private key file, both in PEM format.
+
+The certificate and keys can be generated using the `openssl` CLI tool using the following command.
+
+```bash
+$ openssl req -x509 -newkey rsa:4096 -keyout private_key.pem -out certificate.cer -days 365 -nodes
+```
+
+`certificate.cer` is the public key certificate that you will have to provide to your identity provider so that they can
+encrypt the assertions.
+
+`private_key.pem` is the private key used to decrypt those assertions and should be treated like a password and kept secret.
+
+Once that's done, it's time to tell Teleport about the encryption details. Open the web dashboard for your Teleport proxy and head to Team/Auth Connectors.
+On that page, find your SSO SAML connector and click edit.
+
+Add the following YAML below this section
+
+```yaml
+kind: saml
+metadata:
+  name: azure-saml
+spec:
+  acs: https://test.acrimon.dev:3080/v1/webapi/saml/acs
+```
+
+```yaml
+  signing_key_pair:
+    cert: |
+      <contents of certificate.cer>
+    private_key: |
+      <contents of private_key.pem>
+```
+
+Save the changes to the connector and reload the authentication server.
+Once done, please head to the documentation provided by your identity provider for configuring
+encrypted SAML assertions on that end.
+
 ## Multiple SSO Providers
 
 Teleport can also support multiple connectors, i.e. a Teleport administrator
