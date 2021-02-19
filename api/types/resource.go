@@ -67,6 +67,16 @@ type ResourceWithSecrets interface {
 	WithoutSecrets() Resource
 }
 
+// ResourceWithOrigin includes additional properties which must
+// be provided by resources which come with an origin value.
+type ResourceWithOrigin interface {
+	Resource
+	// IsFromConfigFile returns true if the resource originates from config file.
+	IsFromConfigFile() bool
+	// IsFromConfigFile returns true if the resource originates from defaults.
+	IsFromDefaults() bool
+}
+
 // Clock is used to track TTL of resources.
 // This is only used in SetTTL which is deprecated.
 // DELETE IN 7.0.0
@@ -172,6 +182,11 @@ func (m *Metadata) Expiry() time.Time {
 		return time.Time{}
 	}
 	return *m.Expires
+}
+
+// Origin returns the origin value of the resource.
+func (m *Metadata) Origin() string {
+	return m.Labels[OriginLabel]
 }
 
 // SetTTL sets Expires header using the provided clock.
