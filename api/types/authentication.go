@@ -35,7 +35,7 @@ import (
 // of it.
 type AuthPreference interface {
 	// Resource provides common resource properties.
-	Resource
+	ResourceWithOrigin
 
 	// GetType gets the type of authentication: local, saml, or oidc.
 	GetType() string
@@ -69,12 +69,27 @@ type AuthPreference interface {
 
 // NewAuthPreference is a convenience method to to create AuthPreferenceV2.
 func NewAuthPreference(spec AuthPreferenceSpecV2) (AuthPreference, error) {
+	return NewAuthPreferenceWithLabels(spec, map[string]string{})
+}
+
+// NewAuthPreferenceFromConfigFile is a convenience method to to create
+// AuthPreferenceV2 labelled as originating from config file.
+func NewAuthPreferenceFromConfigFile(spec AuthPreferenceSpecV2) (AuthPreference, error) {
+	return NewAuthPreferenceWithLabels(spec, map[string]string{
+		OriginLabel: OriginConfigFile,
+	})
+}
+
+// NewAuthPreferenceWithLabels is a convenience method to to create
+// AuthPreferenceV2 with a specific map of labels.
+func NewAuthPreferenceWithLabels(spec AuthPreferenceSpecV2, labels map[string]string) (AuthPreference, error) {
 	pref := AuthPreferenceV2{
 		Kind:    KindClusterAuthPreference,
 		Version: V2,
 		Metadata: Metadata{
 			Name:      MetaNameClusterAuthPreference,
 			Namespace: defaults.Namespace,
+			Labels:    labels,
 		},
 		Spec: spec,
 	}
@@ -93,6 +108,9 @@ func DefaultAuthPreference() AuthPreference {
 		Metadata: Metadata{
 			Name:      MetaNameClusterAuthPreference,
 			Namespace: defaults.Namespace,
+			Labels: map[string]string{
+				OriginLabel: OriginDefaults,
+			},
 		},
 		Spec: AuthPreferenceSpecV2{
 			Type:         constants.Local,
@@ -179,6 +197,16 @@ func (c *AuthPreferenceV2) GetSubKind() string {
 // SetSubKind sets resource subkind.
 func (c *AuthPreferenceV2) SetSubKind(sk string) {
 	c.SubKind = sk
+}
+
+// IsFromConfigFile returns true if the resource originates from config file.
+func (c *AuthPreferenceV2) IsFromConfigFile() bool {
+	return c.Metadata.Origin() == OriginConfigFile
+}
+
+// IsFromConfigFile returns true if the resource originates from defaults.
+func (c *AuthPreferenceV2) IsFromDefaults() bool {
+	return c.Metadata.Origin() == OriginDefaults
 }
 
 // GetType returns the type of authentication.
