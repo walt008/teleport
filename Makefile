@@ -636,3 +636,8 @@ init-submodules-e: init-webapps-submodules-e
 update-vendor:
 	go mod tidy
 	go mod vendor
+
+# dronegen generates .drone.yml config
+.PHONY: dronegen
+dronegen:
+	go run ./dronegen
