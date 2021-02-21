@@ -18,25 +18,14 @@ package config
 
 import (
 	"encoding/base64"
+	"fmt"
+	"reflect"
+	"testing"
 
-	"gopkg.in/check.v1"
+	"github.com/stretchr/testify/require"
 )
 
-type FileTestSuite struct {
-}
-
-var _ = check.Suite(&FileTestSuite{})
-
-func (s *FileTestSuite) SetUpSuite(c *check.C) {
-}
-
-func (s *FileTestSuite) TearDownSuite(c *check.C) {
-}
-
-func (s *FileTestSuite) SetUpTest(c *check.C) {
-}
-
-func (s *FileTestSuite) TestAuthenticationSection(c *check.C) {
+func TestAuthenticationSection(t *testing.T) {
 	tests := []struct {
 		inConfigString          string
 		outAuthenticationConfig *AuthenticationConfig
@@ -94,36 +83,35 @@ auth_service:
 
 	// run tests
 	for i, tt := range tests {
-		comment := check.Commentf("Test %v", i)
-
+		comment := fmt.Sprintf("Test %v", i)
 		encodedConfigString := base64.StdEncoding.EncodeToString([]byte(tt.inConfigString))
 
 		fc, err := ReadFromString(encodedConfigString)
-		c.Assert(err, check.IsNil, comment)
+		require.NoError(t, err, comment)
 
-		c.Assert(fc.Auth.Authentication, check.DeepEquals, tt.outAuthenticationConfig, comment)
+		require.True(t, reflect.DeepEqual(fc.Auth.Authentication, tt.outAuthenticationConfig), comment)
 	}
 }
 
 // TestLegacySection ensures we continue to parse and correctly load deprecated
 // OIDC connector and U2F authentication configuration.
-func (s *FileTestSuite) TestLegacyAuthenticationSection(c *check.C) {
+func TestLegacyAuthenticationSection(t *testing.T) {
 	encodedLegacyAuthenticationSection := base64.StdEncoding.EncodeToString([]byte(LegacyAuthenticationSection))
 
 	// read config into struct
 	fc, err := ReadFromString(encodedLegacyAuthenticationSection)
-	c.Assert(err, check.IsNil)
+	require.NoError(t, err)
 
 	// validate oidc connector
-	c.Assert(fc.Auth.OIDCConnectors, check.HasLen, 1)
-	c.Assert(fc.Auth.OIDCConnectors[0].ID, check.Equals, "google")
-	c.Assert(fc.Auth.OIDCConnectors[0].RedirectURL, check.Equals, "https://localhost:3080/v1/webapi/oidc/callback")
-	c.Assert(fc.Auth.OIDCConnectors[0].ClientID, check.Equals, "id-from-google.apps.googleusercontent.com")
-	c.Assert(fc.Auth.OIDCConnectors[0].ClientSecret, check.Equals, "secret-key-from-google")
-	c.Assert(fc.Auth.OIDCConnectors[0].IssuerURL, check.Equals, "https://accounts.google.com")
+	require.Equal(t, len(fc.Auth.OIDCConnectors), 1)
+	require.Equal(t, fc.Auth.OIDCConnectors[0].ID, "google")
+	require.Equal(t, fc.Auth.OIDCConnectors[0].RedirectURL, "https://localhost:3080/v1/webapi/oidc/callback")
+	require.Equal(t, fc.Auth.OIDCConnectors[0].ClientID, "id-from-google.apps.googleusercontent.com")
+	require.Equal(t, fc.Auth.OIDCConnectors[0].ClientSecret, "secret-key-from-google")
+	require.Equal(t, fc.Auth.OIDCConnectors[0].IssuerURL, "https://accounts.google.com")
 
 	// validate u2f
-	c.Assert(fc.Auth.U2F.AppID, check.Equals, "https://graviton:3080")
-	c.Assert(fc.Auth.U2F.Facets, check.HasLen, 1)
-	c.Assert(fc.Auth.U2F.Facets[0], check.Equals, "https://graviton:3080")
+	require.Equal(t, fc.Auth.U2F.AppID, "https://graviton:3080")
+	require.Equal(t, len(fc.Auth.U2F.Facets), 1)
+	require.Equal(t, fc.Auth.U2F.Facets[0], "https://graviton:3080")
 }
