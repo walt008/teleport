@@ -100,16 +100,21 @@ func TestLegacyAuthenticationSection(t *testing.T) {
 	fc, err := ReadFromString(encodedLegacyAuthenticationSection)
 	require.NoError(t, err)
 
-	// validate oidc connector
-	require.Len(t, fc.Auth.OIDCConnectors, 1)
-	require.Equal(t, fc.Auth.OIDCConnectors[0].ID, "google")
-	require.Equal(t, fc.Auth.OIDCConnectors[0].RedirectURL, "https://localhost:3080/v1/webapi/oidc/callback")
-	require.Equal(t, fc.Auth.OIDCConnectors[0].ClientID, "id-from-google.apps.googleusercontent.com")
-	require.Equal(t, fc.Auth.OIDCConnectors[0].ClientSecret, "secret-key-from-google")
-	require.Equal(t, fc.Auth.OIDCConnectors[0].IssuerURL, "https://accounts.google.com")
-
-	// validate u2f
-	require.Equal(t, fc.Auth.U2F.AppID, "https://graviton:3080")
-	require.Len(t, fc.Auth.U2F.Facets, 1)
-	require.Equal(t, fc.Auth.U2F.Facets[0], "https://graviton:3080")
+	// validate oidc connector and u2f
+	require.Equal(t, fc.Auth, Auth{
+		Service: Service{
+			defaultEnabled: true,
+		},
+		OIDCConnectors: []OIDCConnector{{
+			ID:           "google",
+			RedirectURL:  "https://localhost:3080/v1/webapi/oidc/callback",
+			ClientID:     "id-from-google.apps.googleusercontent.com",
+			ClientSecret: "secret-key-from-google",
+			IssuerURL:    "https://accounts.google.com",
+		}},
+		U2F: U2F{
+			AppID:  "https://graviton:3080",
+			Facets: []string{"https://graviton:3080"},
+		},
+	})
 }
