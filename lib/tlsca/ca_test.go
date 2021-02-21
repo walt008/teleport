@@ -20,7 +20,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509/pkix"
-	"reflect"
 	"testing"
 	"time"
 
@@ -58,12 +57,12 @@ func TestPrincipals(t *testing.T) {
 
 	cert, err := ParseCertificatePEM(certBytes)
 	require.NoError(t, err)
-	require.True(t, reflect.DeepEqual(cert.DNSNames, hostnames))
+	require.ElementsMatch(t, cert.DNSNames, hostnames)
 	var certIPs []string
 	for _, ip := range cert.IPAddresses {
 		certIPs = append(certIPs, ip.String())
 	}
-	require.True(t, reflect.DeepEqual(certIPs, ips))
+	require.ElementsMatch(t, certIPs, ips)
 }
 
 // TestKubeExtensions test ASN1 subject kubernetes extensions

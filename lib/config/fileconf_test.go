@@ -19,7 +19,6 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -88,8 +87,7 @@ auth_service:
 
 		fc, err := ReadFromString(encodedConfigString)
 		require.NoError(t, err, comment)
-
-		require.True(t, reflect.DeepEqual(fc.Auth.Authentication, tt.outAuthenticationConfig), comment)
+		require.Equal(t, fc.Auth.Authentication, tt.outAuthenticationConfig, comment)
 	}
 }
 
@@ -103,7 +101,7 @@ func TestLegacyAuthenticationSection(t *testing.T) {
 	require.NoError(t, err)
 
 	// validate oidc connector
-	require.Equal(t, len(fc.Auth.OIDCConnectors), 1)
+	require.Len(t, fc.Auth.OIDCConnectors, 1)
 	require.Equal(t, fc.Auth.OIDCConnectors[0].ID, "google")
 	require.Equal(t, fc.Auth.OIDCConnectors[0].RedirectURL, "https://localhost:3080/v1/webapi/oidc/callback")
 	require.Equal(t, fc.Auth.OIDCConnectors[0].ClientID, "id-from-google.apps.googleusercontent.com")
@@ -112,6 +110,6 @@ func TestLegacyAuthenticationSection(t *testing.T) {
 
 	// validate u2f
 	require.Equal(t, fc.Auth.U2F.AppID, "https://graviton:3080")
-	require.Equal(t, len(fc.Auth.U2F.Facets), 1)
+	require.Len(t, fc.Auth.U2F.Facets, 1)
 	require.Equal(t, fc.Auth.U2F.Facets[0], "https://graviton:3080")
 }

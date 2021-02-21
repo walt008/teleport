@@ -18,7 +18,6 @@ package session
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
 
@@ -93,7 +92,7 @@ func (s *SessionSuite) TestID(t *testing.T) {
 func (s *SessionSuite) TestSessionsCRUD(t *testing.T) {
 	out, err := s.srv.GetSessions(defaults.Namespace)
 	require.NoError(t, err)
-	require.Equal(t, len(out), 0)
+	require.Empty(t, out)
 
 	// Create session.
 	sess := Session{
@@ -109,12 +108,12 @@ func (s *SessionSuite) TestSessionsCRUD(t *testing.T) {
 	// Make sure only one session exists.
 	out, err = s.srv.GetSessions(defaults.Namespace)
 	require.NoError(t, err)
-	require.True(t, reflect.DeepEqual(out, []Session{sess}))
+	require.Equal(t, out, []Session{sess})
 
 	// Make sure the session is the one created above.
 	s2, err := s.srv.GetSession(defaults.Namespace, sess.ID)
 	require.NoError(t, err)
-	require.True(t, reflect.DeepEqual(s2, &sess))
+	require.Equal(t, s2, &sess)
 
 	// Update session terminal parameter
 	err = s.srv.UpdateSession(UpdateRequest{
@@ -128,7 +127,7 @@ func (s *SessionSuite) TestSessionsCRUD(t *testing.T) {
 	sess.TerminalParams = TerminalParams{W: 101, H: 101}
 	s2, err = s.srv.GetSession(defaults.Namespace, sess.ID)
 	require.NoError(t, err)
-	require.True(t, reflect.DeepEqual(s2, &sess))
+	require.Equal(t, s2, &sess)
 
 	// Remove the session.
 	err = s.srv.DeleteSession(defaults.Namespace, sess.ID)
@@ -157,8 +156,7 @@ func (s *SessionSuite) TestSessionsInactivity(t *testing.T) {
 
 	// should not be in active sessions:
 	s2, err := s.srv.GetSession(defaults.Namespace, sess.ID)
-	require.Error(t, err)
-	require.True(t, trace.IsNotFound(err))
+	require.IsType(t, trace.NotFound(""), err)
 	require.Nil(t, s2)
 }
 
@@ -200,13 +198,13 @@ func (s *SessionSuite) TestPartiesCRUD(t *testing.T) {
 	// verify they're in the session:
 	copy, err := s.srv.GetSession(defaults.Namespace, sess.ID)
 	require.NoError(t, err)
-	require.Equal(t, len(copy.Parties), 2)
+	require.Len(t, copy.Parties, 2)
 
 	// empty update (list of parties must not change)
 	err = s.srv.UpdateSession(UpdateRequest{ID: sess.ID, Namespace: defaults.Namespace})
 	require.NoError(t, err)
 	copy, _ = s.srv.GetSession(defaults.Namespace, sess.ID)
-	require.Equal(t, len(copy.Parties), 2)
+	require.Len(t, copy.Parties, 2)
 
 	// remove the 2nd party:
 	deleted := copy.RemoveParty(parties[1].ID)
@@ -214,7 +212,7 @@ func (s *SessionSuite) TestPartiesCRUD(t *testing.T) {
 	err = s.srv.UpdateSession(UpdateRequest{ID: copy.ID, Parties: &copy.Parties, Namespace: defaults.Namespace})
 	require.NoError(t, err)
 	copy, _ = s.srv.GetSession(defaults.Namespace, sess.ID)
-	require.Equal(t, len(copy.Parties), 1)
+	require.Len(t, copy.Parties, 1)
 
 	// we still have the 1st party in:
 	require.Equal(t, parties[0].ID, copy.Parties[0].ID)
